@@ -19,14 +19,25 @@ class Edrone ():
 		self.Ki = [0, 0, 0]
 		self.Kd = [0, 0, 0]
 
-		self.error = [0.0 , 0.0, 0.0]
-		self.error_sum = [0.0 , 0.0, 0.0]
-		self.error_change = [0.0 , 0.0, 0.0]
+		self.error = [0.0, 0.0, 0.0]
+		self.error_sum = [0.0, 0.0, 0.0]
+		self.error_change = [0.0, 0.0, 0.0]
 
-		self.zero_error = [0.0 , 0.0, 0.0]
-		self.roll_error = [0.0 , 0.0, 0.0]
-		self.pitch_error = [0.0 , 0.0, 0.0]
-		self.yaw_error = [0.0 , 0.0, 0.0]
+		self.pwm_cmd = prop_speed()
+		self.pwm_cmd.prop1 = 0.0
+		self.pwm_cmd.prop2 = 0.0
+		self.pwm_cmd.prop3 = 0.0
+		self.pwm_cmd.prop4 = 0.0
+
+
+		self.zero_error = Float32()
+		self.roll_error = Float32()
+		self.pitch_error = Float32()
+		self.yaw_error = Float32()
+		self.zero_error.data = 0.0
+		self.roll_error.data = 0.0
+		self.pitch_error.data = 0.0
+		self.yaw_error.data = 0.0
 
 		# Subscribers
 		rospy.Subscriber('/edrone/imu', Imu, self.imu_callback)
@@ -35,7 +46,8 @@ class Edrone ():
         	rospy.Subscriber('/ypid_params', PidTune, self.set_pid_value_yaw)
 
 		# Publishers
-		self.pwm_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
+		self.pwm_cmdpub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
+		self.zero_error_pub = rospy.Publisher('/zero_error', Float32, queue_size=1)
 		self.roll_error_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
 		self.pitch_error_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
 		self.yaw_error_pub = rospy.Publisher('/yaw_error', Float32, queue_size=1)
