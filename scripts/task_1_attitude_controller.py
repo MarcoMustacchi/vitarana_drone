@@ -42,6 +42,11 @@ class Edrone ():
 		self.pwm_cmd.prop2 = 0.0
 		self.pwm_cmd.prop3 = 0.0
 		self.pwm_cmd.prop4 = 0.0
+		
+		# Input commands from Position Controller
+		self.setpoint_rpyt_cmd = [0.0, 0.0, 0.0]
+		self.throttle_pos_cmd = 0.0
+
 
 		#____________________Subscribers____________________
 		rospy.Subscriber('/edrone/imu', Imu, self.imu_callback)
@@ -50,7 +55,7 @@ class Edrone ():
         	rospy.Subscriber('/ypid_params', PidTune, self.set_pid_value_yaw)
 
 		# ____________________Publishers____________________
-		self.pwm_cmdpub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
+		self.pwm_cmd_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
 		self.zero_error_pub = rospy.Publisher('/zero_error', Float32, queue_size=1)
 		self.roll_error_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
 		self.pitch_error_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
@@ -63,6 +68,14 @@ class Edrone ():
 		self.actual_quaternion_orientation[2] = msg.orientation.z
 		self.actual_quaternion_orientation[3] = msg.orientation.w
 		(actual_euler_orientation[0], actual_euler_orientation[1], actual_euler_orientation[2]) = tf.transformation.euler_from_quaternion(self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3])
+
+
+	# Callback for getting outputs of Position Controller
+	def rpyt_cmd_callback(self, msg):
+		self.setpoint_rpyt_cmd[0] = msg.rcRoll
+		self.setpoint_rpyt_cmd[1] = msg.rcPitch
+		self.setpoint_rpyt_cmd[2] = msg.rcYaw
+		self.throttle_pos_cmd = msg.rcThrottle
 
 	# Callback functions for /pid_tuning
 	def set_pid_value_roll(self, data):
@@ -101,13 +114,20 @@ class Edrone ():
 		self.pitch_error_pub.publish(pitch_error)
 		self.yaw_error_pub.publish(yaw_error)
 		
-
 	# Controller PID 
 	def controller(self):
 		latitude_cmd = self.Kp[0]*self.error + self.Ki[0]*self.error_sum + self.Kd[0]*self.error_change
 		longitude_cmd = self.Kp[1]*self.error + self.Ki[1]*self.error_sum + self.Kd[1]*self.error_change
 		altitude_cmd = self.Kp[2]*self.error + self.Ki[2]*self.error_sum + self.Kd[2]*self.error_change
 
+	# Output commands
+	def out_commands(self):
+		self.pwm_cmd.prop1 = throttle_pos_cmd - latitude_cmd + longitude_cmd - altitude_cmd
+		self.pwm_cmd.prop2 = throttle_pos_cmd - latitude_cmd - longitude_cmd + altitude_cmd
+		self.pwm_cmd.prop3 = throttle_pos_cmd + latitude_cmd - longitude_cmd - altitude_cmd
+		self.pwm_cmd.prop4 = throttle_pos_cmd + latitude_cmd + longitude_cmd + altitude_cmd		
+
+		self.pwm_cmd_pub.publish(self.pwm_cmd)
 		
 
 

@@ -41,6 +41,7 @@ class Edrone ():
 		self.rpyt_cmd.rcYaw = 0.0
 		self.rpyt_cmd.rcThrottle = 0.0
 
+
 		#____________________Subscribers____________________
 		rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
 		rospy.Subscriber('/rpid_params', PidTune, self.set_pid_value_roll)
@@ -48,7 +49,7 @@ class Edrone ():
         	rospy.Subscriber('/ypid_params', PidTune, self.set_pid_value_yaw)
 
 		# ____________________Publishers____________________
-		self.rpyt_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
+		self.rpyt_cmd_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
 		self.zero_error_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
 		self.x_error_pub = rospy.Publisher('/x_error', Float32, queue_size=1)
 		self.y_error_pub = rospy.Publisher('/y_error', Float32, queue_size=1)
@@ -103,7 +104,6 @@ class Edrone ():
 		latitude_cmd = self.Kp[0]*self.error + self.Ki[0]*self.error_sum + self.Kd[0]*self.error_change
 		longitude_cmd = self.Kp[1]*self.error + self.Ki[1]*self.error_sum + self.Kd[1]*self.error_change
 		altitude_cmd = self.Kp[2]*self.error + self.Ki[2]*self.error_sum + self.Kd[2]*self.error_change
-
 
 
 
