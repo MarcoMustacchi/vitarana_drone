@@ -127,11 +127,50 @@ class Edrone ():
 		self.pwm_cmd.prop3 = throttle_pos_cmd + latitude_cmd - longitude_cmd - altitude_cmd
 		self.pwm_cmd.prop4 = throttle_pos_cmd + latitude_cmd + longitude_cmd + altitude_cmd		
 
-		self.pwm_cmd_pub.publish(self.pwm_cmd)
-		
+		self.check_saturation()
 
+		self.pwm_cmd_pub.publish(self.pwm_cmd)
+
+	# Handle output commands Saturation
+	def check_saturation(self):
+		if(self.pwm_cmd.prop1 > 1024):
+		    self.pwm_cmd.prop1 = 1024
+		elif(self.pwm_cmd.prop1 < 0):
+		    self.pwm_cmd.prop1 = 0
+		else:
+		    self.pwm_cmd.prop1 = self.pwm_cmd.prop1
+
+		if(self.pwm_cmd.prop2 > 1024):
+		    self.pwm_cmd.prop2 = 1024
+		elif(self.pwm_cmd.prop2 < 0):
+		    self.pwm_cmd.prop2 = 0
+		else:
+		    self.pwm_cmd.prop2 = self.pwm_cmd.prop2
+
+		if(self.pwm_cmd.prop3 > 1024):
+		    self.pwm_cmd.prop3 = 1024
+		elif(self.pwm_cmd.prop3 < 0):
+		    self.pwm_cmd.prop3 = 0
+		else:
+		    self.pwm_cmd.prop3 = self.pwm_cmd.prop3
+
+		if(self.pwm_cmd.prop4 > 1024):
+		    self.pwm_cmd.prop4 = 1024
+		elif(self.pwm_cmd.prop4 < 0):
+		    self.pwm_cmd.prop4 = 0
+		else:
+		    self.pwm_cmd.prop4 = self.pwm_cmd.prop4
+
+# ____________________Main____________________
+def main(self):
+	drone.error_update()
+	drone.controller()
+	drone.out_commands()
 
 if __name__ == '__main__':
 
 	drone = Edrone()
+
+	while not rospy.is_shutdown():
+		drone.main()
 

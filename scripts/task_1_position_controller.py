@@ -126,8 +126,16 @@ class Edrone ():
 		self.rpyt_cmd_pub.publish(self.rpyt_cmd)
 
 
+# ____________________Main____________________
+def main(self):
+	drone.error_update()
+	drone.controller()
+	drone.out_commands()
 
 if __name__ == '__main__':
 
 	drone = Edrone()
 
+	while not rospy.is_shutdown():
+		drone.main()
+		
