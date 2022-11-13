@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
+import tf
+import numpy as np
 from vitarana_drone.msg import *
 from sensor_msgs.msg import NavSatFix
 from pid_tune.msg import PidTune
@@ -13,6 +15,9 @@ class Edrone ():
 		#____________________Variables____________________ 
 		self.actual_location = [0.0, 0.0, 0.0]
 		self.desired_location = [19.0000451704, 72.0, 3.0]
+
+		self.actual_quaternion_orientation = [0.0, 0.0, 0.0, 0.0]
+		self.actual_euler_orientation = [0.0, 0.0, 0.0]
 
 		self.Kp = [0, 0, 0]
 		self.Ki = [0, 0, 0]
@@ -61,6 +66,13 @@ class Edrone ():
 		self.actual_location[1] = msg.longitude
 		self.actual_location[2] = msg.altitude
 
+	def imu_callback(self, msg): # same as attitude controller
+		self.actual_quaternion_orientation[0] = msg.orientation.x
+		self.actual_quaternion_orientation[1] = msg.orientation.y
+		self.actual_quaternion_orientation[2] = msg.orientation.z
+		self.actual_quaternion_orientation[3] = msg.orientation.w
+		(actual_euler_orientation[0], actual_euler_orientation[1], actual_euler_orientation[2]) = tf.transformation.euler_from_quaternion(self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3])
+
 	# Callback functions for /pid_tuning
 	def set_pid_value_roll(self, data):
 		rospy.loginfo("drone PID roll changed to Kp: " + str(self.Kp[0]) + "Ki: " + str(self.Ki[0]) + "Kd: " + str(self.Kd[0]))
@@ -104,6 +116,14 @@ class Edrone ():
 		latitude_cmd = self.Kp[0]*self.error + self.Ki[0]*self.error_sum + self.Kd[0]*self.error_change
 		longitude_cmd = self.Kp[1]*self.error + self.Ki[1]*self.error_sum + self.Kd[1]*self.error_change
 		altitude_cmd = self.Kp[2]*self.error + self.Ki[2]*self.error_sum + self.Kd[2]*self.error_change
+
+	# Output commands (using Rotation Matrix)
+	def out_commands(self):
+		self.rpyt_cmd.rcRoll = 1500 + latitude_cmd*np.cos(self.actual_euler_orientation[2]) - longitude_cmd*np.sin(self.actual_euler_orientation[2])
+		self.rpyt_cmd.rcPitch = 1500 + latitude_cmd*np.sin(self.actual_euler_orientation[2]) + longitude_cmd*np.cos(self.actual_euler_orientation[2])
+		self.rpyt_cmd.rcThrottle = 1500 + altitude_cmd
+
+		self.rpyt_cmd_pub.publish(self.rpyt_cmd)
 
 
 
