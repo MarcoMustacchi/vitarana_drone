@@ -11,6 +11,9 @@ class Edrone ():
 
 	def __init__(self,):
 
+		#____________________Node____________________
+		rospy.init_node('attitude_controller')
+
 		#____________________Variables____________________ 
 		self.actual_quaternion_orientation = [0.0, 0.0, 0.0, 0.0]
 		self.actual_euler_orientation = [0.0, 0.0, 0.0]
@@ -101,7 +104,7 @@ class Edrone ():
 	def error_update(self):
 	        for i in range(3):
 		    self.error[i] = self.desired_euler_orientation[i] - self.actual_euler_orientation[i]
-		    self.error_value[i] = self.error_sum[i] + self.error[i]
+		    self.error_sum[i] = self.error_sum[i] + self.error[i]
 		    self.error_change[i] = self.error[i] - self.previous_error[i]
 		    self.previous_error[i] = self.error[i]
 
@@ -109,29 +112,23 @@ class Edrone ():
 		self.pitch_error.data = self.error[1]
 		self.yaw_error.data = self.error[2]
 
-		self.zero_error_pub.publish(zero_error)
-		self.roll_error_pub.publish(roll_error)
-		self.pitch_error_pub.publish(pitch_error)
-		self.yaw_error_pub.publish(yaw_error)
+		self.zero_error_pub.publish(self.zero_error)
+		self.roll_error_pub.publish(self.roll_error)
+		self.pitch_error_pub.publish(self.pitch_error)
+		self.yaw_error_pub.publish(self.yaw_error)
 		
 	# Controller PID 
 	def controller(self):
-		latitude_cmd = self.Kp[0]*self.error + self.Ki[0]*self.error_sum + self.Kd[0]*self.error_change
-		longitude_cmd = self.Kp[1]*self.error + self.Ki[1]*self.error_sum + self.Kd[1]*self.error_change
-		altitude_cmd = self.Kp[2]*self.error + self.Ki[2]*self.error_sum + self.Kd[2]*self.error_change
+		latitude_cmd = self.Kp[0]*self.error[0] + self.Ki[0]*self.error_sum[0] + self.Kd[0]*self.error_change[0]
+		longitude_cmd = self.Kp[1]*self.error[1] + self.Ki[1]*self.error_sum[1] + self.Kd[1]*self.error_change[1]
+		altitude_cmd = self.Kp[2]*self.error[2] + self.Ki[2]*self.error_sum[2] + self.Kd[2]*self.error_change[2]
 
-	# Output commands
-	def out_commands(self):
-		self.pwm_cmd.prop1 = throttle_pos_cmd - latitude_cmd + longitude_cmd - altitude_cmd
-		self.pwm_cmd.prop2 = throttle_pos_cmd - latitude_cmd - longitude_cmd + altitude_cmd
-		self.pwm_cmd.prop3 = throttle_pos_cmd + latitude_cmd - longitude_cmd - altitude_cmd
-		self.pwm_cmd.prop4 = throttle_pos_cmd + latitude_cmd + longitude_cmd + altitude_cmd		
+		self.pwm_cmd.prop1 = self.throttle_pos_cmd - latitude_cmd + longitude_cmd - altitude_cmd
+		self.pwm_cmd.prop2 = self.throttle_pos_cmd - latitude_cmd - longitude_cmd + altitude_cmd
+		self.pwm_cmd.prop3 = self.throttle_pos_cmd + latitude_cmd - longitude_cmd - altitude_cmd
+		self.pwm_cmd.prop4 = self.throttle_pos_cmd + latitude_cmd + longitude_cmd + altitude_cmd
 
-		self.check_saturation()
-
-		self.pwm_cmd_pub.publish(self.pwm_cmd)
-
-	# Handle output commands Saturation
+	# Handle output commands Saturation and Publish 
 	def check_saturation(self):
 		if(self.pwm_cmd.prop1 > 1024):
 		    self.pwm_cmd.prop1 = 1024
@@ -161,16 +158,19 @@ class Edrone ():
 		else:
 		    self.pwm_cmd.prop4 = self.pwm_cmd.prop4
 
+
+		self.pwm_cmd_pub.publish(self.pwm_cmd)
+
 # ____________________Main____________________
-def main(self):
+def main():
 	drone.error_update()
 	drone.controller()
-	drone.out_commands()
+	drone.check_saturation()
 
 if __name__ == '__main__':
 
 	drone = Edrone()
 
 	while not rospy.is_shutdown():
-		drone.main()
+		main()
 

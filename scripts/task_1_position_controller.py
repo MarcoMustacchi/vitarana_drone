@@ -12,6 +12,9 @@ class Edrone ():
 
 	def __init__(self,):
 
+		#____________________Node____________________
+		rospy.init_node('position_controller')
+
 		#____________________Variables____________________ 
 		self.actual_location = [0.0, 0.0, 0.0]
 		self.desired_location = [19.0000451704, 72.0, 3.0]
@@ -31,9 +34,9 @@ class Edrone ():
 
 		# Errors to publish for PID tuning
 		self.zero_error = Float32()
-		self.roll_error = Float32()
-		self.pitch_error = Float32()
-		self.yaw_error = Float32()
+		self.x_error = Float32()
+		self.y_error = Float32()
+		self.z_error = Float32()
 		self.zero_error.data = 0.0
 		self.x_error.data = 0.0
 		self.y_error.data = 0.0
@@ -61,7 +64,7 @@ class Edrone ():
 		self.z_error_pub = rospy.Publisher('/z_error', Float32, queue_size=1)
 	
 	# ____________________Callbacks____________________
-	def gps_callback(self):
+	def gps_callback(self, msg):
 		self.actual_location[0] = msg.latitude
 		self.actual_location[1] = msg.longitude
 		self.actual_location[2] = msg.altitude
@@ -97,7 +100,7 @@ class Edrone ():
 	def error_update(self):
 	        for i in range(3):
 		    self.error[i] = self.desired_location[i] - self.actual_location[i]
-		    self.error_value[i] = self.error_sum[i] + self.error[i]
+		    self.error_sum[i] = self.error_sum[i] + self.error[i]
 		    self.error_change[i] = self.error[i] - self.previous_error[i]
 		    self.previous_error[i] = self.error[i]
 		
@@ -105,37 +108,52 @@ class Edrone ():
 		self.y_error.data = self.error[1]
 		self.z_error.data = self.error[2]
 
-		self.zero_error_pub.publish(zero_error)
-		self.x_error_pub.publish(x_error)
-		self.y_error_pub.publish(y_error)
-		self.z_error_pub.publish(z_error)
+		self.zero_error_pub.publish(self.zero_error)
+		self.x_error_pub.publish(self.x_error)
+		self.y_error_pub.publish(self.y_error)
+		self.z_error_pub.publish(self.z_error)
 		
 
 	# Controller PID 
 	def controller(self):
-		latitude_cmd = self.Kp[0]*self.error + self.Ki[0]*self.error_sum + self.Kd[0]*self.error_change
-		longitude_cmd = self.Kp[1]*self.error + self.Ki[1]*self.error_sum + self.Kd[1]*self.error_change
-		altitude_cmd = self.Kp[2]*self.error + self.Ki[2]*self.error_sum + self.Kd[2]*self.error_change
+		latitude_cmd = self.Kp[0]*self.error[0] + self.Ki[0]*self.error_sum[0] + self.Kd[0]*self.error_change[0]
+		longitude_cmd = self.Kp[1]*self.error[1] + self.Ki[1]*self.error_sum[1] + self.Kd[1]*self.error_change[1]
+		altitude_cmd = self.Kp[2]*self.error[2] + self.Ki[2]*self.error_sum[2] + self.Kd[2]*self.error_change[2]
 
-	# Output commands (using Rotation Matrix)
-	def out_commands(self):
 		self.rpyt_cmd.rcRoll = 1500 + latitude_cmd*np.cos(self.actual_euler_orientation[2]) - longitude_cmd*np.sin(self.actual_euler_orientation[2])
 		self.rpyt_cmd.rcPitch = 1500 + latitude_cmd*np.sin(self.actual_euler_orientation[2]) + longitude_cmd*np.cos(self.actual_euler_orientation[2])
 		self.rpyt_cmd.rcThrottle = 1500 + altitude_cmd
+
+	# Handle output commands Saturation
+	def check_saturation(self):
+		if(self.rpyt_cmd.rcRoll > 1800):
+		    self.rpyt_cmd.rcRoll = 1800
+		elif(self.rpyt_cmd.rcRoll < 1200):
+		    self.rpyt_cmd.rcRoll = 1200
+
+		if(self.rpyt_cmd.rcPitch > 1800):
+		    self.rpyt_cmd.rcPitch = 1800
+		elif(self.rpyt_cmd.rcPitch < 1200):
+		    self.rpyt_cmd.rcPitch = 1200
+
+		if(self.rpyt_cmd.rcThrottle > 2000):
+		    self.rpyt_cmd.rcThrottle = 2000
+		elif(self.rpyt_cmd.rcThrottle < 1000):
+		    self.rpyt_cmd.rcThrottle = 1000
 
 		self.rpyt_cmd_pub.publish(self.rpyt_cmd)
 
 
 # ____________________Main____________________
-def main(self):
+def main():
 	drone.error_update()
 	drone.controller()
-	drone.out_commands()
+	drone.check_saturation()
 
 if __name__ == '__main__':
 
 	drone = Edrone()
 
 	while not rospy.is_shutdown():
-		drone.main()
+		main()
 		
