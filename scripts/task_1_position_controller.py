@@ -10,6 +10,7 @@ class Edrone ():
 
 	def __init__(self,):
 
+		#____________________Variables____________________ 
 		self.actual_location = [0.0, 0.0, 0.0]
 		self.desired_location = [19.0000451704, 72.0, 3.0]
 
@@ -17,38 +18,43 @@ class Edrone ():
 		self.Ki = [0, 0, 0]
 		self.Kd = [0, 0, 0]
 
+		# Errors for PID
 		self.error = [0.0, 0.0, 0.0]
 		self.error_sum = [0.0, 0.0, 0.0]
 		self.error_change = [0.0, 0.0, 0.0]
+		self.previous_error = [0.0, 0.0, 0.0]
 
+		# Errors to publish for PID tuning
+		self.zero_error = Float32()
+		self.roll_error = Float32()
+		self.pitch_error = Float32()
+		self.yaw_error = Float32()
+		self.zero_error.data = 0.0
+		self.x_error.data = 0.0
+		self.y_error.data = 0.0
+		self.z_error.data = 0.0
+
+		# Output commands
 		self.rpyt_cmd = edrone_cmd()
 		self.rpyt_cmd.rcRoll = 0.0
 		self.rpyt_cmd.rcPitch = 0.0
 		self.rpyt_cmd.rcYaw = 0.0
 		self.rpyt_cmd.rcThrottle = 0.0
 
-		self.zero_error = Float32()
-		self.roll_error = Float32()
-		self.pitch_error = Float32()
-		self.yaw_error = Float32()
-		self.zero_error = 0.0
-		self.x_error = 0.0
-		self.y_error = 0.0
-		self.z_error = 0.0
-		
-		# Subscribers
+		#____________________Subscribers____________________
 		rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
 		rospy.Subscriber('/rpid_params', PidTune, self.set_pid_value_roll)
         	rospy.Subscriber('/ppid_params', PidTune, self.set_pid_value_pitch)
         	rospy.Subscriber('/ypid_params', PidTune, self.set_pid_value_yaw)
 
-		# Publishers
+		# ____________________Publishers____________________
 		self.rpyt_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
 		self.zero_error_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
 		self.x_error_pub = rospy.Publisher('/x_error', Float32, queue_size=1)
 		self.y_error_pub = rospy.Publisher('/y_error', Float32, queue_size=1)
 		self.z_error_pub = rospy.Publisher('/z_error', Float32, queue_size=1)
-
+	
+	# ____________________Callbacks____________________
 	def gps_callback(self):
 		self.actual_location[0] = msg.latitude
 		self.actual_location[1] = msg.longitude
@@ -72,6 +78,33 @@ class Edrone ():
 		self.Kp[2] = data.Kp 
 		self.Kd[2] = data.Kd 
 		self.Ki[2] = data.Ki
+
+	# ____________________Methods____________________
+	# Updating errors for PID
+	def error_update(self):
+	        for i in range(3):
+		    self.error[i] = self.desired_location[i] - self.actual_location[i]
+		    self.error_value[i] = self.error_sum[i] + self.error[i]
+		    self.error_change[i] = self.error[i] - self.previous_error[i]
+		    self.previous_error[i] = self.error[i]
+		
+		self.x_error.data = self.error[0]
+		self.y_error.data = self.error[1]
+		self.z_error.data = self.error[2]
+
+		self.zero_error_pub.publish(zero_error)
+		self.x_error_pub.publish(x_error)
+		self.y_error_pub.publish(y_error)
+		self.z_error_pub.publish(z_error)
+		
+
+	# Controller PID 
+	def controller(self):
+		latitude_cmd = self.Kp[0]*self.error + self.Ki[0]*self.error_sum + self.Kd[0]*self.error_change
+		longitude_cmd = self.Kp[1]*self.error + self.Ki[1]*self.error_sum + self.Kd[1]*self.error_change
+		altitude_cmd = self.Kp[2]*self.error + self.Ki[2]*self.error_sum + self.Kd[2]*self.error_change
+
+
 
 
 if __name__ == '__main__':
