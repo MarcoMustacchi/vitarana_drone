@@ -17,7 +17,7 @@ class Edrone ():
 
 		#____________________Variables____________________ 
 		self.actual_location = [0.0, 0.0, 0.0]
-		self.desired_location = [19.0000451704, 72.0, 3.0]
+		self.desired_location = [19.0, 72.0, 3.0]
 
 		self.actual_quaternion_orientation = [0.0, 0.0, 0.0, 0.0]
 		self.actual_euler_orientation = [0.0, 0.0, 0.0]
@@ -58,7 +58,7 @@ class Edrone ():
 
 		# ____________________Publishers____________________
 		self.rpyt_cmd_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
-		self.zero_error_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
+		self.zero_error_pub = rospy.Publisher('/zero_error', Float32, queue_size=1)
 		self.x_error_pub = rospy.Publisher('/x_error', Float32, queue_size=1)
 		self.y_error_pub = rospy.Publisher('/y_error', Float32, queue_size=1)
 		self.z_error_pub = rospy.Publisher('/z_error', Float32, queue_size=1)
@@ -156,4 +156,4 @@ if __name__ == '__main__':
 
 	while not rospy.is_shutdown():
 		main()
-		
+

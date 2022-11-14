@@ -53,6 +53,7 @@ class Edrone ():
 
 		#____________________Subscribers____________________
 		rospy.Subscriber('/edrone/imu', Imu, self.imu_callback)
+		rospy.Subscriber('/drone_command', edrone_cmd, self.rpyt_cmd_callback)
 		rospy.Subscriber('/rpid_params', PidTune, self.set_pid_value_roll)
         	rospy.Subscriber('/ppid_params', PidTune, self.set_pid_value_pitch)
         	rospy.Subscriber('/ypid_params', PidTune, self.set_pid_value_yaw)
@@ -173,4 +174,3 @@ if __name__ == '__main__':
 
 	while not rospy.is_shutdown():
 		main()
-
