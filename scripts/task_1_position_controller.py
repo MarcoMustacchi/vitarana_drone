@@ -96,9 +96,10 @@ class Edrone ():
 		self.Ki[2] = data.Ki
 
 	# ____________________Methods____________________
-	# Updating errors for PID
-	def error_update(self):
-	        for i in range(3):
+	# Controller PID 
+	def pid(self):
+		# Updating errors for PID and Publish
+		for i in range(3):
 		    self.error[i] = self.desired_location[i] - self.actual_location[i]
 		    self.error_sum[i] = self.error_sum[i] + self.error[i]
 		    self.error_change[i] = self.error[i] - self.previous_error[i]
@@ -112,20 +113,18 @@ class Edrone ():
 		self.x_error_pub.publish(self.x_error)
 		self.y_error_pub.publish(self.y_error)
 		self.z_error_pub.publish(self.z_error)
-		
 
-	# Controller PID 
-	def controller(self):
+		# PID Control
 		latitude_cmd = self.Kp[0]*self.error[0] + self.Ki[0]*self.error_sum[0] + self.Kd[0]*self.error_change[0]
 		longitude_cmd = self.Kp[1]*self.error[1] + self.Ki[1]*self.error_sum[1] + self.Kd[1]*self.error_change[1]
 		altitude_cmd = self.Kp[2]*self.error[2] + self.Ki[2]*self.error_sum[2] + self.Kd[2]*self.error_change[2]
 
+		# Output commands
 		self.rpyt_cmd.rcRoll = 1500 + latitude_cmd*np.cos(self.actual_euler_orientation[2]) - longitude_cmd*np.sin(self.actual_euler_orientation[2])
 		self.rpyt_cmd.rcPitch = 1500 + latitude_cmd*np.sin(self.actual_euler_orientation[2]) + longitude_cmd*np.cos(self.actual_euler_orientation[2])
 		self.rpyt_cmd.rcThrottle = 1500 + altitude_cmd
 
-	# Handle output commands Saturation
-	def check_saturation(self):
+		# Handle output commands Saturation and Publish
 		if(self.rpyt_cmd.rcRoll > 1800):
 		    self.rpyt_cmd.rcRoll = 1800
 		elif(self.rpyt_cmd.rcRoll < 1200):
@@ -146,9 +145,7 @@ class Edrone ():
 
 # ____________________Main____________________
 def main():
-	drone.error_update()
-	drone.controller()
-	drone.check_saturation()
+	drone.pid()
 
 if __name__ == '__main__':
 
