@@ -75,7 +75,13 @@ class Edrone ():
 		self.actual_quaternion_orientation[1] = msg.orientation.y
 		self.actual_quaternion_orientation[2] = msg.orientation.z
 		self.actual_quaternion_orientation[3] = msg.orientation.w
-		(actual_euler_orientation[0], actual_euler_orientation[1], actual_euler_orientation[2]) = tf.transformation.euler_from_quaternion(self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3])
+
+		(self.actual_euler_orientation[0], self.actual_euler_orientation[1], self.actual_euler_orientation[2]) = tf.transformation.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
+
+		# Converting radians to degrees
+		self.actual_euler_orientation[0]=math.degrees(self.actual_euler_orientation[0])
+		self.actual_euler_orientation[1]=math.degrees(self.actual_euler_orientation[1])
+		self.actual_euler_orientation[2]=math.degrees(self.actual_euler_orientation[2])
 
 
 	# Callback for getting outputs of Position Controller
@@ -85,21 +91,23 @@ class Edrone ():
 		self.setpoint_rpyt_cmd[2] = msg.rcYaw
 		self.throttle_pos_cmd = msg.rcThrottle
 
+       		# Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch, yaw axis
+       		self.desired_euler_orientation[0] = self.setpoint_rpyt_cmd[0] * 0.02 - 30
+        	self.desired_euler_orientation[1] = self.setpoint_rpyt_cmd[1] * 0.02 - 30
+       		self.desired_euler_orientation[2] = self.setpoint_rpyt_cmd[2] * 0.02 - 30
+
 	# Callback functions for /pid_tuning
 	def set_pid_value_roll(self, data):
-		rospy.loginfo("drone PID roll changed to Kp: " + str(self.Kp[0]) + "Ki: " + str(self.Ki[0]) + "Kd: " + str(self.Kd[0]))
 		self.Kp[0] = data.Kp 
 		self.Kd[0] = data.Kd
 		self.Ki[0] = data.Ki
 
 	def set_pid_value_pitch(self, data):
-		rospy.loginfo("drone PID roll changed to Kp: " + str(self.Kp[1]) + "Ki: " + str(self.Ki[1]) + "Kd: " + str(self.Kd[1]))
 		self.Kp[1] = data.Kp 
 		self.Kd[1] = data.Kd 
 		self.Ki[1] = data.Ki
 
 	def set_pid_value_yaw(self, data):
-		rospy.loginfo("drone PID roll changed to Kp: " + str(self.Kp[2]) + "Ki: " + str(self.Ki[2]) + "Kd: " + str(self.Kd[2]))
 		self.Kp[2] = data.Kp 
 		self.Kd[2] = data.Kd 
 		self.Ki[2] = data.Ki
@@ -181,3 +189,4 @@ if __name__ == '__main__':
 
 	while not rospy.is_shutdown():
 		main()
+		r.sleep()
