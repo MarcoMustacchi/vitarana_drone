@@ -57,9 +57,10 @@ class Edrone ():
 		#____________________Subscribers____________________
 		rospy.Subscriber('/edrone/imu', Imu, self.imu_callback)
 		rospy.Subscriber('/drone_command', edrone_cmd, self.rpyt_cmd_callback)
-		rospy.Subscriber('/rpid_params', PidTune, self.set_pid_value_roll)
-        	rospy.Subscriber('/ppid_params', PidTune, self.set_pid_value_pitch)
-        	rospy.Subscriber('/ypid_params', PidTune, self.set_pid_value_yaw)
+		rospy.Subscriber('/pid_tuning_roll', PidTune, self.set_pid_value_roll)
+        	rospy.Subscriber('/pid_tuning_pitch', PidTune, self.set_pid_value_pitch)
+        	rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
+		# rospy.Subscriber('/pid_tuning_altitude', PidTune, self.set_pid_value_throttle)
 
 		# ____________________Publishers____________________
 		self.pwm_cmd_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)

@@ -52,9 +52,10 @@ class Edrone ():
 
 		#____________________Subscribers____________________
 		rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
-		rospy.Subscriber('/rpid_params', PidTune, self.set_pid_value_roll)
-        	rospy.Subscriber('/ppid_params', PidTune, self.set_pid_value_pitch)
-        	rospy.Subscriber('/ypid_params', PidTune, self.set_pid_value_yaw)
+		rospy.Subscriber('/pid_tuning_roll', PidTune, self.set_pid_value_roll)
+        	rospy.Subscriber('/pid_tuning_pitch', PidTune, self.set_pid_value_pitch)
+        	rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
+		# rospy.Subscriber('/pid_tuning_altitude', PidTune, self.set_pid_value_throttle)
 
 		# ____________________Publishers____________________
 		self.rpyt_cmd_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
@@ -84,13 +85,13 @@ class Edrone ():
 		self.Ki[0] = data.Ki
 
 	def set_pid_value_pitch(self, data):
-		rospy.loginfo("drone PID roll changed to Kp: " + str(self.Kp[1]) + "Ki: " + str(self.Ki[1]) + "Kd: " + str(self.Kd[1]))
+		rospy.loginfo("drone PID pitch changed to Kp: " + str(self.Kp[1]) + "Ki: " + str(self.Ki[1]) + "Kd: " + str(self.Kd[1]))
 		self.Kp[1] = data.Kp 
 		self.Kd[1] = data.Kd 
 		self.Ki[1] = data.Ki
 
 	def set_pid_value_yaw(self, data):
-		rospy.loginfo("drone PID roll changed to Kp: " + str(self.Kp[2]) + "Ki: " + str(self.Ki[2]) + "Kd: " + str(self.Kd[2]))
+		rospy.loginfo("drone PID yaw changed to Kp: " + str(self.Kp[2]) + "Ki: " + str(self.Ki[2]) + "Kd: " + str(self.Kd[2]))
 		self.Kp[2] = data.Kp 
 		self.Kd[2] = data.Kd 
 		self.Ki[2] = data.Ki
