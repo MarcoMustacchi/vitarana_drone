@@ -52,17 +52,19 @@ class Edrone ():
 		self.setpoint_rpyt_cmd = [0.0, 0.0, 0.0]
 		self.throttle_pos_cmd = 0.0
 
-		# Sample time
+		# Desired Orientation Tolerance
+		self.ori_tolerance = [0.0, 0.0, 0.0]
+
+		# Controller Sample Time
 		self.sample_time = 0.05  # in seconds
 
 
 		#____________________Subscribers____________________
-		rospy.Subscriber('/edrone/imu', Imu, self.imu_callback)
+		rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
 		rospy.Subscriber('/drone_command', edrone_cmd, self.rpyt_cmd_callback)
 		rospy.Subscriber('/pid_tuning_roll', PidTune, self.set_pid_value_roll)
 		rospy.Subscriber('/pid_tuning_pitch', PidTune, self.set_pid_value_pitch)
 		rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
-		# rospy.Subscriber('/pid_tuning_altitude', PidTune, self.set_pid_value_throttle)
 
 		# ____________________Publishers____________________
 		self.pwm_cmd_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
@@ -78,7 +80,7 @@ class Edrone ():
 		self.actual_quaternion_orientation[2] = msg.orientation.z
 		self.actual_quaternion_orientation[3] = msg.orientation.w
 
-		(self.actual_euler_orientation[0], self.actual_euler_orientation[1], self.actual_euler_orientation[2]) = tf.transformation.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
+		(self.actual_euler_orientation[0], self.actual_euler_orientation[1], self.actual_euler_orientation[2]) = tf.transformations.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
 
 		# Converting radians to degrees
 		self.actual_euler_orientation[0]=math.degrees(self.actual_euler_orientation[0])
@@ -139,7 +141,7 @@ class Edrone ():
 		altitude_cmd = self.Kp[2]*self.error[2] + self.Ki[2]*self.error_sum[2] + self.Kd[2]*self.error_change[2]
 
 		# Conversion from 1000-2000 to 0-1024
-		throttle_att_cmd = self.throttle_pos_cmd*1.024  - 1024.0
+		throttle_att_cmd = (self.throttle_pos_cmd*1.024)  - 1024.0
 
 		# Output commands
 		prop1 = throttle_att_cmd - latitude_cmd + longitude_cmd - altitude_cmd

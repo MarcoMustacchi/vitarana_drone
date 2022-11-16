@@ -17,7 +17,7 @@ class Edrone ():
 		rospy.init_node('position_controller')
 
 		#____________________Variables____________________ 
-		self.actual_location = [0.0, 0.0, 0.0]
+		self.actual_location = [19.0, 72.0, 0.31]
 		self.desired_location = [19.0, 72.0, 3.0]
 
 		self.actual_quaternion_orientation = [0.0, 0.0, 0.0, 0.0]
@@ -50,6 +50,10 @@ class Edrone ():
 		self.rpyt_cmd.rcYaw = 0.0
 		self.rpyt_cmd.rcThrottle = 0.0
 
+		# Desired Orientation Tolerance
+		self.ori_tolerance = [0.0, 0.0, 0.0]
+
+		# Controller Sample Time
 		self.sample_time = 0.05  # in seconds
 
 
@@ -78,7 +82,7 @@ class Edrone ():
 		self.actual_quaternion_orientation[1] = msg.orientation.y
 		self.actual_quaternion_orientation[2] = msg.orientation.z
 		self.actual_quaternion_orientation[3] = msg.orientation.w
-		(actual_euler_orientation[0], actual_euler_orientation[1], actual_euler_orientation[2]) = tf.transformation.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
+		(actual_euler_orientation[0], actual_euler_orientation[1], actual_euler_orientation[2]) = tf.transformations.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
 
 	# Callback functions for /pid_tuning
 	def set_pid_value_roll(self, msg):
