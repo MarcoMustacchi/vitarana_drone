@@ -50,8 +50,8 @@ class Edrone ():
 		self.rpyt_cmd.rcYaw = 0.0
 		self.rpyt_cmd.rcThrottle = 0.0
 
-		# Desired Orientation Tolerance
-		self.ori_tolerance = [0.0, 0.0, 0.0]
+		# Desired Position Tolerance
+		self.pos_tolerance = [0.000004517, 0.0000047487, 0.2]
 
 		# Controller Sample Time
 		self.sample_time = 0.05  # in seconds
@@ -82,7 +82,7 @@ class Edrone ():
 		self.actual_quaternion_orientation[1] = msg.orientation.y
 		self.actual_quaternion_orientation[2] = msg.orientation.z
 		self.actual_quaternion_orientation[3] = msg.orientation.w
-		(actual_euler_orientation[0], actual_euler_orientation[1], actual_euler_orientation[2]) = tf.transformations.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
+		(actual_euler_orientation[1], actual_euler_orientation[0], actual_euler_orientation[2]) = tf.transformations.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
 
 	# Callback functions for /pid_tuning
 	def set_pid_value_roll(self, msg):
@@ -155,13 +155,19 @@ class Edrone ():
 # ____________________Main____________________
 def main():
 	rospy.loginfo("Drone started from location: " + str(drone.actual_location))
-
 	rospy.loginfo("Drone desired location: " + str(drone.desired_location))
 	
-	while(drone.actual_location[2] != drone.desired_location[2]):
+	# while at least one position is out of range, keep running controller
+	while((drone.actual_location[0] > drone.desired_location[0]+drone.pos_tolerance[0] or drone.actual_location[0] < drone.desired_location[0]-drone.pos_tolerance[0]) or (drone.actual_location[1] > drone.desired_location[1]+drone.pos_tolerance[1] or drone.actual_location[1] < drone.desired_location[1]-drone.pos_tolerance[1]) or (drone.actual_location[2] > drone.desired_location[2]+drone.pos_tolerance[2] or drone.actual_location[2] < drone.desired_location[2]-drone.pos_tolerance[2])):
 		drone.pid()
 		time.sleep(drone.sample_time)
 
+	rospy.loginfo("Drone desired location reached!")
+
+	# pause of 5 sec
+    	t = time.time()
+    	while time.time() -t < 5:
+        	drone.pid()
 
 if __name__ == '__main__':
 

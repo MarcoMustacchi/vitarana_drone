@@ -80,12 +80,12 @@ class Edrone ():
 		self.actual_quaternion_orientation[2] = msg.orientation.z
 		self.actual_quaternion_orientation[3] = msg.orientation.w
 
-		(self.actual_euler_orientation[0], self.actual_euler_orientation[1], self.actual_euler_orientation[2]) = tf.transformations.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
+		(self.actual_euler_orientation[1], self.actual_euler_orientation[0], self.actual_euler_orientation[2]) = tf.transformations.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
 
 		# Converting radians to degrees
-		self.actual_euler_orientation[0]=math.degrees(self.actual_euler_orientation[0])
-		self.actual_euler_orientation[1]=math.degrees(self.actual_euler_orientation[1])
-		self.actual_euler_orientation[2]=math.degrees(self.actual_euler_orientation[2])
+		# self.actual_euler_orientation[0]=math.degrees(self.actual_euler_orientation[0])
+		# self.actual_euler_orientation[1]=math.degrees(self.actual_euler_orientation[1])
+		# self.actual_euler_orientation[2]=math.degrees(self.actual_euler_orientation[2])
 
 
 	# Callback for getting outputs of Position Controller
