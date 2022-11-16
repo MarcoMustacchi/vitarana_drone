@@ -3,6 +3,7 @@
 import rospy
 import tf
 import numpy as np
+import time
 from vitarana_drone.msg import *
 from sensor_msgs.msg import NavSatFix
 from pid_tune.msg import PidTune
@@ -24,7 +25,7 @@ class Edrone ():
 
 		self.Kp = [0, 0, 0]
 		self.Ki = [0, 0, 0]
-		self.Kd = [0, 0, 0]
+        	self.Kd = [0, 0, 0]
 
 		# Errors for PID
 		self.error = [0.0, 0.0, 0.0]
@@ -49,12 +50,14 @@ class Edrone ():
 		self.rpyt_cmd.rcYaw = 0.0
 		self.rpyt_cmd.rcThrottle = 0.0
 
+		self.sample_time = 0.05  # in seconds
+
 
 		#____________________Subscribers____________________
 		rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
 		rospy.Subscriber('/pid_tuning_roll', PidTune, self.set_pid_value_roll)
-        	rospy.Subscriber('/pid_tuning_pitch', PidTune, self.set_pid_value_pitch)
-        	rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
+		rospy.Subscriber('/pid_tuning_pitch', PidTune, self.set_pid_value_pitch)
+		rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
 		rospy.Subscriber('/pid_tuning_altitude', PidTune, self.set_pid_value_throttle)
 
 		# ____________________Publishers____________________
@@ -75,7 +78,7 @@ class Edrone ():
 		self.actual_quaternion_orientation[1] = msg.orientation.y
 		self.actual_quaternion_orientation[2] = msg.orientation.z
 		self.actual_quaternion_orientation[3] = msg.orientation.w
-		(actual_euler_orientation[0], actual_euler_orientation[1], actual_euler_orientation[2]) = tf.transformation.euler_from_quaternion(self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3])
+		(actual_euler_orientation[0], actual_euler_orientation[1], actual_euler_orientation[2]) = tf.transformation.euler_from_quaternion([self.actual_quaternion_orientation[0], self.actual_quaternion_orientation[1], self.actual_quaternion_orientation[2], self.actual_quaternion_orientation[3]])
 
 	# Callback functions for /pid_tuning
 	def set_pid_value_roll(self, msg):
@@ -92,9 +95,9 @@ class Edrone ():
 		pass
 
 	def set_pid_value_throttle(self, msg):
-		self.Kp[2] = msg.Kp
-		self.Kd[2] = msg.Kd
-		self.Ki[2] = msg.Ki
+		self.Kp[2] = msg.Kp * 0.1
+		self.Kd[2] = msg.Kd * 0.1
+		self.Ki[2] = msg.Ki * 0.5
 
 	# ____________________Methods____________________
 	# Controller PID 
@@ -147,7 +150,14 @@ class Edrone ():
 
 # ____________________Main____________________
 def main():
-	drone.pid()
+	rospy.loginfo("Drone started from location: " + str(drone.actual_location))
+
+	rospy.loginfo("Drone desired location: " + str(drone.desired_location))
+	
+	while(drone.actual_location[2] != drone.desired_location[2]):
+		drone.pid()
+		time.sleep(drone.sample_time)
+
 
 if __name__ == '__main__':
 

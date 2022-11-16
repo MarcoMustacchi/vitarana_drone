@@ -2,6 +2,8 @@
 
 import rospy
 import tf
+import time
+import math
 from vitarana_drone.msg import *
 from sensor_msgs.msg import Imu
 from pid_tune.msg import PidTune
@@ -51,15 +53,15 @@ class Edrone ():
 		self.throttle_pos_cmd = 0.0
 
 		# Sample time
-		self.sample_time = 0.050 # in seconds
+		self.sample_time = 0.05  # in seconds
 
 
 		#____________________Subscribers____________________
 		rospy.Subscriber('/edrone/imu', Imu, self.imu_callback)
 		rospy.Subscriber('/drone_command', edrone_cmd, self.rpyt_cmd_callback)
 		rospy.Subscriber('/pid_tuning_roll', PidTune, self.set_pid_value_roll)
-        	rospy.Subscriber('/pid_tuning_pitch', PidTune, self.set_pid_value_pitch)
-        	rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
+		rospy.Subscriber('/pid_tuning_pitch', PidTune, self.set_pid_value_pitch)
+		rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
 		# rospy.Subscriber('/pid_tuning_altitude', PidTune, self.set_pid_value_throttle)
 
 		# ____________________Publishers____________________
@@ -91,10 +93,10 @@ class Edrone ():
 		self.setpoint_rpyt_cmd[2] = msg.rcYaw
 		self.throttle_pos_cmd = msg.rcThrottle
 
-       		# Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch, yaw axis
-       		self.desired_euler_orientation[0] = self.setpoint_rpyt_cmd[0] * 0.02 - 30
-        	self.desired_euler_orientation[1] = self.setpoint_rpyt_cmd[1] * 0.02 - 30
-       		self.desired_euler_orientation[2] = self.setpoint_rpyt_cmd[2] * 0.02 - 30
+		# Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch, yaw axis
+		self.desired_euler_orientation[0] = self.setpoint_rpyt_cmd[0] * 0.02 - 30
+		self.desired_euler_orientation[1] = self.setpoint_rpyt_cmd[1] * 0.02 - 30
+		self.desired_euler_orientation[2] = self.setpoint_rpyt_cmd[2] * 0.02 - 30
 
 	# Callback functions for /pid_tuning
 	def set_pid_value_roll(self, data):
@@ -178,15 +180,13 @@ class Edrone ():
 		self.pwm_cmd_pub.publish(self.pwm_cmd)
 
 # ____________________Main____________________
-def main():
-	drone.pid()
-
 if __name__ == '__main__':
 
 	drone = Edrone()
 
-	r = rospy.Rate(drone.sample_time)
+	rospy.loginfo("Drone started from orientation: " + str(drone.actual_euler_orientation))
 
 	while not rospy.is_shutdown():
-		main()
-		r.sleep()
+		drone.pid()
+		time.sleep(drone.sample_time)
+
