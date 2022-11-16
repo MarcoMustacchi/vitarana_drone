@@ -23,9 +23,9 @@ class Edrone ():
 		self.actual_quaternion_orientation = [0.0, 0.0, 0.0, 0.0]
 		self.actual_euler_orientation = [0.0, 0.0, 0.0]
 
-		self.Kp = [0, 0, 0]
+		self.Kp = [0, 0, 60]
 		self.Ki = [0, 0, 0]
-        	self.Kd = [0, 0, 0]
+        	self.Kd = [0, 0, 2000]
 
 		# Errors for PID
 		self.error = [0.0, 0.0, 0.0]
@@ -57,8 +57,8 @@ class Edrone ():
 		rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
 		rospy.Subscriber('/pid_tuning_roll', PidTune, self.set_pid_value_roll)
 		rospy.Subscriber('/pid_tuning_pitch', PidTune, self.set_pid_value_pitch)
-		rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
-		rospy.Subscriber('/pid_tuning_altitude', PidTune, self.set_pid_value_throttle)
+		# rospy.Subscriber('/pid_tuning_yaw', PidTune, self.set_pid_value_yaw)
+		# rospy.Subscriber('/pid_tuning_altitude', PidTune, self.set_pid_value_throttle)
 
 		# ____________________Publishers____________________
 		self.rpyt_cmd_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
@@ -91,13 +91,13 @@ class Edrone ():
 		self.Kd[1] = msg.Kd 
 		self.Ki[1] = msg.Ki
 
-	def set_pid_value_yaw(self):
-		pass
+	# def set_pid_value_yaw(self):
+		# pass
 
-	def set_pid_value_throttle(self, msg):
-		self.Kp[2] = msg.Kp * 0.1
-		self.Kd[2] = msg.Kd * 0.1
-		self.Ki[2] = msg.Ki * 0.5
+	# def set_pid_value_throttle(self, msg):
+		# self.Kp[2] = msg.Kp * 0.1
+		# self.Kd[2] = msg.Kd * 0.1
+		# self.Ki[2] = msg.Ki * 0.5
 
 	# ____________________Methods____________________
 	# Controller PID 
